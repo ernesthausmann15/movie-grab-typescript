@@ -12,6 +12,8 @@ import type { Movie } from "@/types/movie";
 type SearchStatus = "idle" | "loading" | "success" | "error";
 
 const SUGGESTIONS = ["Arrival", "The Godfather", "Inception"] as const;
+// Opening catalogue. OMDb has no "trending" feed, so a title search fills the grid on first paint.
+const FEATURED_TITLE = "Star Wars";
 
 export default function HomePage() {
   const router = useRouter();
@@ -20,11 +22,40 @@ export default function HomePage() {
   const [status, setStatus] = useState<SearchStatus>("idle");
   const [error, setError] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
+  const [isFeatured, setIsFeatured] = useState(true);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    abortRef.current = controller;
+    let active = true;
+
+    async function loadFeatured() {
+      setStatus("loading");
+      setError("");
+      try {
+        const data = await searchMovies(FEATURED_TITLE, 1, controller.signal);
+        // A newer search may have aborted this request. Don't overwrite those results.
+        if (!active || controller.signal.aborted) return;
+        setMovies(data.Search ?? []);
+        setActiveQuery(FEATURED_TITLE);
+        setIsFeatured(true);
+        setStatus("success");
+      } catch (requestError: unknown) {
+        if (!active || isAbortError(requestError)) return;
+        setMovies([]);
+        setError(
+          getErrorMessage(requestError, "Couldn't load movies. Please try again."),
+        );
+        setStatus("error");
+      }
+    }
+
+    void loadFeatured();
+
     return () => {
-      abortRef.current?.abort();
+      active = false;
+      controller.abort();
     };
   }, []);
 
@@ -38,11 +69,13 @@ export default function HomePage() {
 
     setTerm(trimmed);
     setActiveQuery(trimmed);
+    setIsFeatured(false);
     setStatus("loading");
     setError("");
 
     try {
       const data = await searchMovies(trimmed, 1, controller.signal);
+      if (controller.signal.aborted) return;
       const results: Movie[] = data.Search ?? [];
       setMovies(results);
       setStatus("success");
@@ -105,13 +138,15 @@ export default function HomePage() {
           <div>
             <span className="eyebrow">Instant discovery</span>
             <h2 className="text-balance">
-              {status === "success" && activeQuery
-                ? `Results for “${activeQuery}”`
-                : status === "loading"
-                  ? "Searching the catalogue…"
-                  : status === "error"
-                    ? "We hit a snag"
-                    : "Start with a classic"}
+              {status === "success" && isFeatured
+                ? "Featured titles"
+                : status === "success" && activeQuery
+                  ? `Results for “${activeQuery}”`
+                  : status === "loading"
+                    ? "Searching the catalogue…"
+                    : status === "error"
+                      ? "We hit a snag"
+                      : "Start with a classic"}
             </h2>
           </div>
           {status === "success" && movies.length > 0 ? (

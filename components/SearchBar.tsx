@@ -15,7 +15,7 @@ export default function SearchBar({
   value,
   onChange,
   onSubmit,
-  placeholder = "Search titles, genres, or stars",
+  placeholder = "Search by title",
   buttonLabel = "Search",
   isLoading = false,
 }: SearchBarProps) {
@@ -32,7 +32,7 @@ export default function SearchBar({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        aria-label="Search movies"
+        aria-label="Search by title"
         disabled={isLoading}
         autoComplete="off"
       />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import type { Movie } from "@/types/movie";
 
@@ -12,8 +13,11 @@ interface MovieCardProps {
 }
 
 export default function MovieCard({ movie, onSelect }: MovieCardProps) {
-  const poster =
+  const resolvedPoster =
     movie.Poster && movie.Poster !== "N/A" ? movie.Poster : FALLBACK_POSTER;
+  // Remember which URL failed so a later movie doesn't stay stuck on the placeholder.
+  const [failedPoster, setFailedPoster] = useState<string | null>(null);
+  const poster = failedPoster === resolvedPoster ? FALLBACK_POSTER : resolvedPoster;
 
   return (
     <article
@@ -33,6 +37,9 @@ export default function MovieCard({ movie, onSelect }: MovieCardProps) {
             alt={`${movie.Title} poster`}
             loading="lazy"
             className="block h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+            onError={() => {
+              if (poster !== FALLBACK_POSTER) setFailedPoster(resolvedPoster);
+            }}
           />
           <span className="poster-badge absolute left-2.5 top-2.5 border border-[var(--line)] bg-[rgba(10,10,12,0.92)] px-1.5 py-1 font-mono text-[0.58rem] font-medium uppercase tracking-wide text-white">
             {movie.Type || "film"}

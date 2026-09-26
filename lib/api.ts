@@ -5,7 +5,8 @@ import type {
   OmdbSearchSuccess,
 } from "@/types/omdb";
 
-const API_KEY = process.env.NEXT_PUBLIC_OMDB_API_KEY ?? "21079115";
+// Empty env values must fall back too. `??` would keep "" and every search would fail.
+const API_KEY = process.env.NEXT_PUBLIC_OMDB_API_KEY?.trim() || "21079115";
 const API_URL = "https://www.omdbapi.com/";
 const API_DELAY_MS = 650;
 
@@ -95,11 +96,13 @@ export function searchMovies(
   page = 1,
   signal?: AbortSignal,
 ): Promise<OmdbSearchSuccess> {
-  const params: OmdbSearchParams = { s: query, page };
+  // OMDb `s` matches the title text. `type=movie` keeps series and games out of the grid.
+  const params: OmdbSearchParams = { s: query, page, type: "movie" };
   return request<OmdbSearchSuccess>(
     {
       s: params.s,
       page: params.page ?? 1,
+      type: params.type ?? "movie",
     },
     signal,
   );
