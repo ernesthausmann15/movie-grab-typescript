@@ -13,7 +13,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <div
       className={cn(
-        "app-shell relative isolate min-h-screen transition-colors duration-700",
+        "app-shell relative isolate min-h-screen",
         theme === "light" ? "theme-light" : "theme-dark",
       )}
     >

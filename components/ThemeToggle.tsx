@@ -11,7 +11,7 @@ interface ThemeToggleProps {
  * Fluid day/night control — Obsidian cinematic ↔ ultra-clean light.
  */
 export default function ThemeToggle({ className }: ThemeToggleProps) {
-  const { theme, toggleTheme, mounted } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
 
   return (
@@ -45,7 +45,7 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
         />
       </span>
       <span className="toggle-label relative z-10 transition-opacity duration-300">
-        {!mounted ? "—" : isDark ? "NIGHT" : "DAY"}
+        {isDark ? "NIGHT" : "DAY"}
       </span>
     </button>
   );

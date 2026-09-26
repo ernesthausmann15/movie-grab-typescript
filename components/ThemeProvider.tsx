@@ -9,8 +9,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { THEME_STORAGE_KEY, type Theme } from "@/lib/theme";
 
-export type Theme = "light" | "dark";
+export type { Theme };
 
 interface ThemeContextValue {
   theme: Theme;
@@ -18,8 +19,6 @@ interface ThemeContextValue {
   toggleTheme: () => void;
   mounted: boolean;
 }
-
-const STORAGE_KEY = "moviegrab-theme";
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
@@ -31,19 +30,18 @@ function applyThemeClass(theme: Theme) {
   root.style.colorScheme = theme;
 }
 
+function readBootTheme(): Theme {
+  if (typeof document === "undefined") return "light";
+  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
+  // Match the head script. Server and the first client render both start in day mode.
+  const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    const initial: Theme =
-      stored === "light" || stored === "dark"
-        ? stored
-        : window.matchMedia("(prefers-color-scheme: light)").matches
-          ? "light"
-          : "dark";
-
+    const initial = readBootTheme();
     setThemeState(initial);
     applyThemeClass(initial);
     setMounted(true);
@@ -51,14 +49,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
-    window.localStorage.setItem(STORAGE_KEY, next);
+    window.localStorage.setItem(THEME_STORAGE_KEY, next);
     applyThemeClass(next);
   }, []);
 
   const toggleTheme = useCallback(() => {
     setThemeState((current) => {
       const next: Theme = current === "light" ? "dark" : "light";
-      window.localStorage.setItem(STORAGE_KEY, next);
+      window.localStorage.setItem(THEME_STORAGE_KEY, next);
       applyThemeClass(next);
       return next;
     });
